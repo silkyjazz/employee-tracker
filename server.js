@@ -25,99 +25,130 @@ const db = mysql.createConnection(
   console.log('WELCOME TO THE EMPLOYEE TRACKER')
 );
 
-function viewDeparments() {
-  inquirer
-    .prompt([
-    {
-        type: 'list',
-        name: 'answer',
-        message: 'What would you like to do?',
-        choices: ['view all departments','view all roles','view all employees','add a department','add a role','add an employee', 'update an employee']
-    }
-        
-])
+function mainMenu() {
 
-    .then(function (results){
-        db.query('SELECT * FROM department', function (err, results) {
-            if(err){
-              throw err
-            }else{
-              console.table(results)
+    console.log("\n");
+
+    inquirer
+        .prompt([
+            {
+                type: 'list',
+                name: 'answer',
+                message: 'What would you like to do?',
+                choices: [
+                    'view all departments',
+                    'view all roles',
+                    'view all employees',
+                    'add a department',
+                    'add a role',
+                    'add an employee', 
+                    'update an employee']
             }
-            
-          });
-    });
+        ])
+        .then((answer) => {
+            console.log(answer);
 
+            if (answer.answer === "view all departments") {
+                return viewDeparments();
+            } else if (answer.answer === "view all roles") {
+                return viewRoles();
+            } else if (answer.answer === "view all employees") {
+                return viewEmployees();
+            }else if(answer.answer === 'add a department'){
+                return addDeparment();
+            }
+        }) 
+
+}
+
+
+function viewDeparments() {
+
+    db.query('SELECT * FROM department', function (err, results) {
+        if(err){
+            throw err
+        }else{
+            console.log("\n");
+            console.table(results);
+
+            return mainMenu();
+        }
+        
+        });
 }
 
 
 function viewRoles(){
-    inquirer
-    .prompt([
-    {
-        type: 'list',
-        name: 'answer',
-        message: 'What would you like to do?',
-        choices: ['view all departments','view all roles','view all employees','add a department','add a role','add an employee', 'update an employee']
-    }
+
+
+    db.query("SELECT role.id as ID, role.title as 'Job Title', department.name as Department, role.salary as Salary  FROM role LEFT JOIN department ON role.department_id = department.id", function (err, results) {
+        if(err){
+            throw err
+        }else{
+            console.log("\n");
+
+            console.table(results);
+            return mainMenu();
+        }
         
-])
+        });
 
-    .then(function (results){
-        // console.log(answer)
-
-        //join tables
-        db.query("SELECT role.id as ID, role.title as 'Job Title', department.name as Department, role.salary as Salary  FROM role LEFT JOIN department ON role.department_id = department.id", function (err, results) {
-            if(err){
-              throw err
-            }else{
-              console.table(results)
-            }
-            
-          });
-    });
+        
 }
 
 function viewEmployees(){
-    inquirer
-    .prompt([
-    {
-        type: 'list',
-        name: 'answer',
-        message: 'What would you like to do?',
-        choices: ['view all departments','view all roles','view all employees','add a department','add a role','add an employee', 'update an employee']
-    }
-        
-])
 
-    .then(function (results){
+
+
         db.query("SELECT employee.id as 'Employee ID', employee.first_name AS 'First Name', employee.last_name AS 'Last Name', department.name AS Department, role.salary AS Salary, CONCAT(manager.first_name,' ',manager.last_name )  AS Manager, role.title AS Role FROM employee LEFT JOIN role ON employee.role_id = role.id LEFT JOIN department ON role.department_id = department.id LEFT JOIN employee manager ON manager.id = employee.manager_id ORDER BY employee.id", function (err, results) {
             if(err){
               throw err
             }else{
-              console.table(results)
+                console.log("\n");
+              console.table(results);
+
+              return mainMenu();
             }
             
           });
-    });
+
+          
 }
 
-// function addDeparment(){
-//     inquirer
-//     .prompt([
-//       {
-//         type: 'input',
-//         name: 'departmentName',
-//         message: 'What is the name of the department?'
+function addDeparment(){
 
-//       },
-//     ])
-//     .then (function (result){
-//         db.query(`INSERT ? INTO department`, function (err, result){
-//             console.log('Department added to the database!')
-//         })
-//     })
-//   }
+    const departmentsArr = [];
+
+    db.query('SELECT * FROM department', function (err, departments) {
+
+        for (let i=0; i<departments.length; i++){
+            departmentsArr.push(departments[i].name);
+        }
+        console.log("before updates: ", departmentsArr);
+
+        inquirer
+        .prompt([
+          {
+            type: 'input',
+            name: 'departmentName',
+            message: 'What is the name of the department?'
+    
+          }
+        ])
+        .then (function (result){
+            const param = result.departmentName;
+            db.query(`INSERT INTO department (name) VALUES (?)`, param);
+            
+            console.log("after updates: ", departmentsArr);
+
+            return viewDeparments();
+    
+        })
+
+    })
+
+    
+  }
 
 // function addRole(){
 //     inquirer
@@ -136,12 +167,12 @@ function viewEmployees(){
 //         type: 'list',
 //         name: 'departmentName',
 //         message: 'What department does the role belong to?',
-//         choice: [""] 
+//         choice: [deparmentArr] 
 //       },
 
 //     ])
 //     .then (function (result){
-//         db.query(`INSERT ? INTO roles`, function (err, result){
+//         db.query("INSERT INTO role (title,salary,department_id) VALUES(?,?,?)", function (err, result){
 //             console.log('Role added to the database!')
 //         })
 //     })
@@ -190,7 +221,8 @@ function viewEmployees(){
 //how do i get all departments, roles, employees from the database including newly added ones?
 
 
-// viewDeparments();
+mainMenu();
+//viewDeparments();
 // viewRoles();
 // viewEmployees();
 // addDeparment();
