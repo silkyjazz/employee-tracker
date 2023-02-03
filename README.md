@@ -44,8 +44,14 @@ After running `node server.js` this user will see this menu
 Choose from the choices
 
 ![Departments](./assets/departments.png)
+
+
 ![Employees](./assets/employees.png)
+
+
 ![Roles](./assets/roles.png)
+
+
 ![Add department](./assets/add_department.png)
 
 
